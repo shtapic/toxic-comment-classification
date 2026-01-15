@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Environments
+env/
+venv/
+.venv/
+
+# Data (обычно данные не хранят в git, если они большие)
+# data/
+# *.csv
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
