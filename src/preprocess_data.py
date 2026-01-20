@@ -17,5 +17,6 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\d+", " <NUMB> ", text)
     text = re.sub(r"[^a-z\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
+    
     return text
 

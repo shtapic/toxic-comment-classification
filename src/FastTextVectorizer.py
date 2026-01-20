@@ -32,9 +32,11 @@ class FastTextVectorizer(TransformerMixin):
         vectors = []
         for text in X:
             words = text.lower().split()
-            words_vec = [self.model.wv[word] for word in words if word in self.model.wv]
-            vectors.append(np.mean(words_vec, axis=0))
-
-        return np.array(vectors)
-
+            words_vec = [self.model.wv[word] for word in words]
+            if len(words_vec) == 0:
+                vectors.append(np.zeros(self.vector_size))
+            else:
+                vectors.append(np.mean(words_vec, axis=0))
+                
+        return np.vstack(vectors)
 

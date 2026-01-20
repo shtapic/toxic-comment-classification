@@ -1,0 +1,15 @@
+model/distilbeart_embedder/model.safetensors
+__pycache__/
+*.env
+*.venv
+.env
+.venv
+.vscode/
+# OS
+.DS_Store
+Thumbs.db
+model/
+*.pt
+*.pth
+*.safetensors
+*.ckpt
