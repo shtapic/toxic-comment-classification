@@ -34,7 +34,7 @@ def create_embedding_matrix_and_vocab(FastText_pipeline):
     print(f"Vocab size: {vocab_size}, Embedding dim: {embed_dim}")
 
     for word, idx in word_to_idx.items():
-        if idx == 0: continue # PAD -> zeros
+        if idx == 0: continue 
         if idx == 1:
             embedding_matrix[idx] = fast_text_model.wv['jsdfhskdjfh'] 
         else:

@@ -18,6 +18,7 @@ class BiLSTMClassifier(nn.Module):
     def forward(self, x):
         embedded = self.embedding(x)
         lstm, _ = self.lstm(embedded)
-        out = self.clf(lstm[:, -1, :])
+        not_padded, _ = torch.max(lstm, dim=1)
+        out = self.clf(not_padded)
         return torch.sigmoid(out)
     
