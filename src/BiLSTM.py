@@ -6,7 +6,7 @@ class BiLSTMClassifier(nn.Module):
     def __init__(self, vocab_size, hidden_dim, output_dim, n_layers, dropout, embed_dim, pretrained_embeddings=None):
         super().__init__()
         if pretrained_embeddings is not None:
-            self.embedding = nn.Embedding.from_pretrained(pretrained_embeddings, padding_idx=0)
+            self.embedding = nn.Embedding.from_pretrained(pretrained_embeddings, freeze=False, padding_idx=0)
         else:
             self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
 
