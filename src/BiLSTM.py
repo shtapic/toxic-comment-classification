@@ -20,5 +20,5 @@ class BiLSTMClassifier(nn.Module):
         lstm, _ = self.lstm(embedded)
         not_padded, _ = torch.max(lstm, dim=1)
         out = self.clf(not_padded)
-        return torch.sigmoid(out)
+        return out
     

@@ -10,13 +10,14 @@ def train_model(model, train_loader, val_loader, n_epochs=5, lr=1e-3, device=Non
     
     model.to(device)
     model.train() # Ensure train mode
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     loss_history = []
     
     for epoch in range(n_epochs):
         model.train()
+        epoch_loss = 0
         for text, labels in train_loader:
             text = text.to(device)
             labels = labels.to(device)
@@ -25,10 +26,11 @@ def train_model(model, train_loader, val_loader, n_epochs=5, lr=1e-3, device=Non
             output = model(text)
             batch_loss = criterion(output, labels)
             batch_loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
-            
-        loss_history.append(batch_loss.item())
-        print(f'Epoch {epoch+1}/{n_epochs}, Loss: {batch_loss.item():.4f}')
+            epoch_loss += batch_loss.item()
+        loss_history.append(epoch_loss / len(train_loader))
+        print(f'Epoch {epoch+1}/{n_epochs}, Loss: {epoch_loss / len(train_loader):.4f}')
 
     plt.plot(range(1, n_epochs+1), loss_history)
     plt.xlabel('Epochs')
