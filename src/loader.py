@@ -44,7 +44,7 @@ def create_embedding_matrix_and_vocab(FastText_pipeline):
     return torch.FloatTensor(embedding_matrix), word_to_idx
 
 
-class ToxictDataset(Dataset):
+class ToxicDataset (Dataset):
     def __init__(self, df, text_column, target_columns, max_length, word_to_idx):
         super().__init__()
         self.text = df[text_column].values
