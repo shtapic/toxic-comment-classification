@@ -4,179 +4,693 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toxic Comment Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --danger: #dc2626; 
-            --safe: #16a34a;   
-            --neutral: #94a3b8; 
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --primary-light: #a78bfa;
+            --bg-gradient-1: #0f0c29;
+            --bg-gradient-2: #302b63;
+            --bg-gradient-3: #24243e;
+            --card: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.4);
+            --safe: #22c55e;
+            --safe-glow: rgba(34, 197, 94, 0.4);
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 50%, var(--bg-gradient-3) 100%);
             color: var(--text);
-            margin: 0;
-            display: flex;
-            justify-content: center;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.08) 0%, transparent 40%);
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+
+        .main-wrapper {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            align-items: flex-start;
         }
 
         .container {
-            width: 100%;
-            max-width: 600px;
+            flex: 0 0 500px;
             background: var(--card);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            height: fit-content;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, #ec4899 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.5);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 10px 40px -5px rgba(139, 92, 246, 0.7); }
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         p.subtitle {
             text-align: center;
-            color: #64748b;
+            color: var(--text-muted);
             margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 1.25rem;
         }
 
         textarea {
             width: 100%;
-            height: 120px;
-            padding: 1rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            height: 140px;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
             font-size: 1rem;
-            resize: vertical;
-            box-sizing: border-box; 
-            margin-bottom: 1rem;
+            color: var(--text);
+            resize: none;
             font-family: inherit;
+            transition: all 0.3s ease;
+            line-height: 1.6;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
         }
 
         textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(139, 92, 246, 0.05);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15),
+                        0 0 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
         button {
             width: 100%;
-            padding: 0.75rem;
-            background-color: var(--primary);
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #ec4899 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 14px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
         }
 
         button:hover {
-            background-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         button:disabled {
-            background-color: #94a3b8;
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        #results {
-            margin-top: 2rem;
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
             display: none;
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        button.loading .spinner {
+            display: block;
+        }
+
+        button.loading .btn-text,
+        button.loading .btn-icon {
+            display: none;
+        }
+
+        .results-panel {
+            flex: 1;
+            min-width: 400px;
+            max-width: 550px;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+
+        .results-panel.visible {
+            display: block;
+            animation: slideInRight 0.5s ease;
+        }
+
+        .results-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #results {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .results-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
         .result-item {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease backwards;
+        }
+
+        .result-item:nth-child(1) { animation-delay: 0.05s; }
+        .result-item:nth-child(2) { animation-delay: 0.1s; }
+        .result-item:nth-child(3) { animation-delay: 0.15s; }
+        .result-item:nth-child(4) { animation-delay: 0.2s; }
+        .result-item:nth-child(5) { animation-delay: 0.25s; }
+        .result-item:nth-child(6) { animation-delay: 0.3s; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-item.detected {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .result-item.safe {
+            background: rgba(34, 197, 94, 0.05);
+            border-color: rgba(34, 197, 94, 0.1);
         }
 
         .label-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.25rem;
-            font-size: 0.9rem;
-            font-weight: 500;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .label-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label-name {
+            font-size: 0.85rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text);
+        }
+
+        .label-icon {
+            font-size: 1.1rem;
+        }
+
+        .score-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .score-value {
+            font-size: 1rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .score-value.high { color: var(--danger); }
+        .score-value.medium { color: var(--warning); }
+        .score-value.low { color: var(--safe); }
+
+        .threshold-info {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .bar-container {
+            position: relative;
+            height: 10px;
         }
 
         .bar-bg {
             width: 100%;
-            height: 8px;
-            background-color: #e2e8f0;
-            border-radius: 4px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
             overflow: hidden;
+            position: relative;
         }
 
         .bar-fill {
             height: 100%;
             width: 0%;
-            border-radius: 4px;
-            transition: width 1s ease-out, background-color 0.3s;
+            border-radius: 5px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .bar-fill.danger {
+            background: linear-gradient(90deg, var(--danger), #f97316);
+            box-shadow: 0 0 20px var(--danger-glow);
+        }
+
+        .bar-fill.safe {
+            background: linear-gradient(90deg, var(--safe), #a3e635);
+            box-shadow: 0 0 10px var(--safe-glow);
+        }
+
+        .thresh-marker {
+            position: absolute;
+            width: 3px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .thresh-marker::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid rgba(255, 255, 255, 0.8);
         }
 
         .badge {
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: white;
-            font-weight: bold;
-            display: none; /* Скрыт по умолчанию */
-        }
-        .badge.detected {
-            display: inline-block;
-            background-color: var(--danger);
-        }
-        
-        .thresh-marker {
-            position: absolute;
-            width: 2px;
-            height: 100%;
-            background-color: black;
-            opacity: 0.3;
-            top: 0;
-            z-index: 2;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: badge-pulse 2s ease-in-out infinite;
         }
 
+        @keyframes badge-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .badge.detected {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .badge.safe-badge {
+            background: linear-gradient(135deg, var(--safe), #16a34a);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .summary {
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.5s ease 0.4s backwards;
+        }
+
+        .summary.toxic {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .summary.clean {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(163, 230, 53, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .summary-icon {
+            font-size: 1.5rem;
+        }
+
+        .summary-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .container {
+                flex: none;
+                width: 100%;
+                max-width: 600px;
+            }
+
+            .results-panel {
+                width: 100%;
+                max-width: 600px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container,
+            .results-panel {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .result-item {
+                padding: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Toxic Detector</h1>
-        <p class="subtitle">Введите комментарий для проверки на токсичность</p>
-        <textarea id="inputText" placeholder="Type something... e.g., 'You are stupid'"></textarea>
-        <button id="analyzeBtn" onclick="analyze()">Проверить</button>
-        <div id="results"></div>
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <h1>Toxic Detector</h1>
+            </div>
+            <p class="subtitle">AI-powered comment toxicity analysis</p>
+            
+            <div class="input-wrapper">
+                <textarea id="inputText" placeholder="Enter your comment here for toxicity analysis...&#10;&#10;Example: 'You are an amazing person!'"></textarea>
+                <span class="char-count"><span id="charCount">0</span> characters</span>
+            </div>
+            
+            <button id="analyzeBtn" onclick="analyze()">
+                <span class="btn-icon">🔍</span>
+                <span class="btn-text">Analyze Comment</span>
+                <div class="spinner"></div>
+            </button>
+            
+            <div class="footer">
+                Model trained on English text • TF-IDF + Logistic Regression
+            </div>
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-message" id="toastMessage"></span>
     </div>
 
     <script>
+        // Character counter
+        const textarea = document.getElementById('inputText');
+        const charCount = document.getElementById('charCount');
+        
+        textarea.addEventListener('input', () => {
+            charCount.textContent = textarea.value.length;
+        });
+
+        // Toast notification
+        function showToast(message, icon = '⚠️') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = toast.querySelector('.toast-icon');
+            
+            toastMessage.textContent = message;
+            toastIcon.textContent = icon;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // Label icons mapping
+        const labelIcons = {
+            'toxic': '☠️',
+            'severe_toxic': '💀',
+            'obscene': '🤬',
+            'threat': '⚠️',
+            'insult': '😤',
+            'identity_hate': '🚫'
+        };
+
         async function analyze() {
             const text = document.getElementById('inputText').value;
             const btn = document.getElementById('analyzeBtn');
             const resultsDiv = document.getElementById('results');
+            const resultsPanel = document.getElementById('resultsPanel');
 
             if (!text.trim()) {
-                alert("Введите текст!");
+                showToast("Please enter some text to analyze!", "📝");
                 return;
             }
 
-            // Простая проверка: если есть русские буквы, останавливаем
+            // Check for Russian text
             if (/[а-яА-ЯёЁ]/.test(text)) {
-                alert("⚠️ Модель обучена на английском языке.\n\nПоддержка русского языка появится в следующих обновлениях.");
+                showToast("This model is trained on English text only. Russian support coming soon!", "🌐");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerText = "Анализ...";
-            resultsDiv.style.display = 'none';
+            btn.classList.add('loading');
 
             try {
                 const response = await fetch('/api/classify', {
@@ -185,62 +699,98 @@
                     body: JSON.stringify({ content: text })
                 });
 
-                if (!response.ok) throw new Error("Ошибка сервера");
+                if (!response.ok) throw new Error("Server error");
 
                 const data = await response.json();
                 renderResults(data);
+                resultsPanel.classList.add('visible');
 
             } catch (error) {
-                alert("Произошла ошибка: " + error.message);
+                showToast("An error occurred: " + error.message, "❌");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Проверить";
+                btn.classList.remove('loading');
             }
         }
 
         function renderResults(data) {
             const container = document.getElementById('results');
             container.innerHTML = '';
-            container.style.display = 'block';
 
-            // Проходимся по всем ключам (токсичность, угрозы и т.д.)
-             for (const [label, info] of Object.entries(data)) {
+            // Header
+            container.innerHTML = `
+                <div class="results-header">
+                    <span style="font-size: 1.3rem;">📊</span>
+                    <span class="results-title">Analysis Results</span>
+                </div>
+            `;
+
+            let detectedCount = 0;
+
+            for (const [label, info] of Object.entries(data)) {
+                const prob = info.score * 100;
+                const thresh = info.threshold * 100;
+                const isDetected = info.is_toxic;
                 
-                const prob = info.score * 100;       // Вероятность 0-100
-                const thresh = info.threshold * 100; // Порог 0-100
-                const isDetected = info.is_detected;
+                if (isDetected) detectedCount++;
 
                 const percentStr = prob.toFixed(1);
+                const icon = labelIcons[label] || '📌';
                 
-                // Если превышен порог - красный, если нет - серый/зеленый
-                const barColor = isDetected ? 'var(--danger)' : 'var(--safe)';
-                
-                // Метка "DETECTED" или пусто
+                // Score color class
+                let scoreClass = 'low';
+                if (prob >= 50) scoreClass = 'high';
+                else if (prob >= 25) scoreClass = 'medium';
+
                 const badgeHtml = isDetected 
                     ? `<span class="badge detected">DETECTED</span>` 
-                    : ``;
+                    : `<span class="badge safe-badge">OK</span>`;
 
                 const html = `
-                    <div class="result-item">
+                    <div class="result-item ${isDetected ? 'detected' : 'safe'}">
                         <div class="label-row">
-                            <span>
-                                ${badgeHtml} 
-                                ${label.replace('_', ' ').toUpperCase()}
-                            </span>
-                            <span>${percentStr}% <span style="font-size:0.8em; color:#888;">(порог ${thresh.toFixed(0)}%)</span></span>
+                            <div class="label-info">
+                                <span class="label-icon">${icon}</span>
+                                <span class="label-name">${label.replace('_', ' ')}</span>
+                                ${badgeHtml}
+                            </div>
+                            <div class="score-info">
+                                <span class="threshold-info">threshold ${thresh.toFixed(0)}%</span>
+                                <span class="score-value ${scoreClass}">${percentStr}%</span>
+                            </div>
                         </div>
-                        <div class="bar-bg" style="position: relative;">
-                            <!-- Линия порога -->
-                            <div class="thresh-marker" style="left: ${thresh}%;" title="Порог срабатывания"></div>
-                            
-                            <!-- Заполнение -->
-                            <div class="bar-fill" style="width: ${percentStr}%; background-color: ${barColor}; opacity: ${isDetected ? 1 : 0.6}"></div>
+                        <div class="bar-container">
+                            <div class="bar-bg">
+                                <div class="thresh-marker" style="left: calc(${thresh}% - 1.5px);" title="Detection threshold"></div>
+                                <div class="bar-fill ${isDetected ? 'danger' : 'safe'}" style="width: ${percentStr}%;"></div>
+                            </div>
                         </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', html);
             }
+
+            // Summary
+            const summaryClass = detectedCount > 0 ? 'toxic' : 'clean';
+            const summaryIcon = detectedCount > 0 ? '⚠️' : '✅';
+            const summaryText = detectedCount > 0 
+                ? `${detectedCount} toxicity type${detectedCount > 1 ? 's' : ''} detected in this comment`
+                : 'No toxicity detected - this comment looks clean!';
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="summary ${summaryClass}">
+                    <span class="summary-icon">${summaryIcon}</span>
+                    <span class="summary-text">${summaryText}</span>
+                </div>
+            `);
         }
+
+        // Enter key to analyze
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyze();
+            }
+        });
     </script>
 </body>
 </html>
