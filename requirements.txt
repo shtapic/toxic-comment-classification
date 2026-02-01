@@ -1,10 +1,13 @@
 numpy
 pandas
-scipy
 scikit-learn
 matplotlib
 torch
 gensim
 shap
 joblib
-tqdm
+transformers
+fastapi
+uvicorn
+jinja2
+pydantic

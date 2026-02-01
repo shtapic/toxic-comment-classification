@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toxic Comment Detector</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #dc2626; 
+            --safe: #16a34a;   
+            --neutral: #94a3b8; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            height: fit-content;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            box-sizing: border-box; 
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #4f46e5;
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #results {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 1rem;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 1s ease-out, background-color 0.3s;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            display: none; /* Скрыт по умолчанию */
+        }
+        .badge.detected {
+            display: inline-block;
+            background-color: var(--danger);
+        }
+        
+        .thresh-marker {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: black;
+            opacity: 0.3;
+            top: 0;
+            z-index: 2;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Toxic Detector</h1>
+        <p class="subtitle">Введите комментарий для проверки на токсичность</p>
+        <textarea id="inputText" placeholder="Type something... e.g., 'You are stupid'"></textarea>
+        <button id="analyzeBtn" onclick="analyze()">Проверить</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function analyze() {
+            const text = document.getElementById('inputText').value;
+            const btn = document.getElementById('analyzeBtn');
+            const resultsDiv = document.getElementById('results');
+
+            if (!text.trim()) {
+                alert("Введите текст!");
+                return;
+            }
+
+            // Простая проверка: если есть русские буквы, останавливаем
+            if (/[а-яА-ЯёЁ]/.test(text)) {
+                alert("⚠️ Модель обучена на английском языке.\n\nПоддержка русского языка появится в следующих обновлениях.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Анализ...";
+            resultsDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/classify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: text })
+                });
+
+                if (!response.ok) throw new Error("Ошибка сервера");
+
+                const data = await response.json();
+                renderResults(data);
+
+            } catch (error) {
+                alert("Произошла ошибка: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Проверить";
+            }
+        }
+
+        function renderResults(data) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+            container.style.display = 'block';
+
+            // Проходимся по всем ключам (токсичность, угрозы и т.д.)
+             for (const [label, info] of Object.entries(data)) {
+                
+                const prob = info.score * 100;       // Вероятность 0-100
+                const thresh = info.threshold * 100; // Порог 0-100
+                const isDetected = info.is_detected;
+
+                const percentStr = prob.toFixed(1);
+                
+                // Если превышен порог - красный, если нет - серый/зеленый
+                const barColor = isDetected ? 'var(--danger)' : 'var(--safe)';
+                
+                // Метка "DETECTED" или пусто
+                const badgeHtml = isDetected 
+                    ? `<span class="badge detected">DETECTED</span>` 
+                    : ``;
+
+                const html = `
+                    <div class="result-item">
+                        <div class="label-row">
+                            <span>
+                                ${badgeHtml} 
+                                ${label.replace('_', ' ').toUpperCase()}
+                            </span>
+                            <span>${percentStr}% <span style="font-size:0.8em; color:#888;">(порог ${thresh.toFixed(0)}%)</span></span>
+                        </div>
+                        <div class="bar-bg" style="position: relative;">
+                            <!-- Линия порога -->
+                            <div class="thresh-marker" style="left: ${thresh}%;" title="Порог срабатывания"></div>
+                            
+                            <!-- Заполнение -->
+                            <div class="bar-fill" style="width: ${percentStr}%; background-color: ${barColor}; opacity: ${isDetected ? 1 : 0.6}"></div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+    </script>
+</body>
+</html>
