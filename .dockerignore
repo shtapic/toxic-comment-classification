@@ -1,0 +1,11 @@
+# Игнорируемые файлы и папки для Docker контекста
+__pycache__/
+*.pyc
+.git
+.gitignore
+.env
+venv/
+env/
+data/
+*.ipynb
+README.md

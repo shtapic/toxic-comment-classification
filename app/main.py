@@ -60,12 +60,13 @@ def home(request: Request):
 @app.post("/api/classify", tags=["Text Classification"], summary="Classify Text")
 async def classify_text(text: Text) -> dict:
     global model, vectorizer, thresholds
-    
-    if not model or not vectorizer or not thresholds:
-        raise HTTPException(status_code=500, detail="Model not loaded. Please try again later.")
-    
+
     if not text.content.strip():
         raise HTTPException(status_code=400, detail="Input text cannot be empty.")
+
+    if not model or not vectorizer or not thresholds:
+        raise HTTPException(status_code=500, detail="Model not loaded. Please try again later.")
+
     
     try:
         text_vectorized = vectorizer.transform([text.content])
