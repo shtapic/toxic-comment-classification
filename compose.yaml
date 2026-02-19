@@ -1,12 +1,13 @@
 services:
   app:
-    build: ..
+    build: .
     container_name: toxic_classifier_app
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app/app
       - ./src:/app/src
+      - ./model:/app/model
     environment:
       - PYTHONPATH=/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
