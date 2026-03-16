@@ -13,3 +13,5 @@ jinja2
 pydantic
 pytest
 httpx
+datasets
+peft
